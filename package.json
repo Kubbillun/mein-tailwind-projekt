@@ -4,6 +4,13 @@
     "build": "vite build",
     "preview": "vite preview",
     "publish:now": "dotenv -e .env -- node scripts/publish-now.mjs",
-    "rpc:smoke": "dotenv -e .env -- node scripts/rpc-smoke.mjs"
+    "publish:in": "dotenv -e .env -- node scripts/publish-in.mjs",
+    "publish:backfill": "dotenv -e .env -- node scripts/publish-backfill.mjs",
+    "rpc:smoke": "dotenv -e .env -- node scripts/rpc-smoke.mjs",
+    "lint": "echo \"(temporary) no lint configured\" && exit 0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.0.2",
+    "vite": "^7.1.4"
   }
 }
