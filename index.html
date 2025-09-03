@@ -1,21 +1,15 @@
 <!doctype html>
 <html lang="de">
+
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Weiterleitung</title>
-  <meta http-equiv="refresh" content="0;url=./cards.html" />
-  <script>
-    // Fallback falls Meta-Refresh geblockt wird
-    window.location.replace("./cards.html");
-  </script>
-  <style>
-    :root { color-scheme: light dark; }
-    body { font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; padding:2rem }
-    a { color:#2563eb; text-decoration:none } a:hover{text-decoration:underline}
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Feed</title>
 </head>
+
 <body>
-  <p>Weiterleitung zur <a href="./cards.html">Karten‑Übersicht</a>…</p>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
 </body>
+
 </html>
