@@ -17,3 +17,4 @@
 Do  4 Sep 2025 12:52:51 UTC – auto-merge smoke
 Do  4 Sep 2025 14:08:57 UTC – auto-merge smoke
 Do  4 Sep 2025 14:11:13 UTC – auto-merge smoke
+Do  4 Sep 2025 14:12:23 UTC – auto-merge verify
