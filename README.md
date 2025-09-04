@@ -20,4 +20,8 @@ Do  4 Sep 2025 12:45:44 UTC – auto-merge smoke
 Do  4 Sep 2025 12:49:23 UTC – auto-merge smoke
 =======
 Do  4 Sep 2025 12:52:51 UTC – auto-merge smoke
+<<<<<<< HEAD
 >>>>>>> 8770576 (chore(test): auto-merge smoke)
+=======
+Do  4 Sep 2025 13:09:36 UTC — auto-merge verify
+>>>>>>> 7fd0ac1 (chore(test): auto-merge verify)
