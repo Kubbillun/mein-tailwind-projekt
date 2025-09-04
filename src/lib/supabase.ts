@@ -1,13 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 
-const url = import.meta.env.VITE_SUPABASE_URL as string;
-const anon = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+const anon = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
 if (!url || !anon) {
-    // sichtbarer Hinweis im Browser und in der Konsole
-    const msg = 'Supabase ENV fehlt: VITE_SUPABASE_URL oder VITE_SUPABASE_ANON_KEY';
-    console.error(msg);
-    throw new Error(msg);
+    // nur Laufzeit-Check – bricht den **Build** nicht
+    throw new Error('Supabase ENV fehlt: VITE_SUPABASE_URL oder VITE_SUPABASE_ANON_KEY');
 }
 
 export const supabase = createClient(url, anon, {

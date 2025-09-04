@@ -1,38 +1,18 @@
-[
-  {
-    "id": "elsa",
-    "name": "Elsa – Frozen Trading Card",
-    "series": "Frozen",
-    "description": "Magie des Winters – limitierte Edition.",
-    "price": 49.99,
-    "trend": 53,
-    "rawPrice": "50 €",
-    "lastSale": "52 €",
-    "image": "elsa-card.jpg",
-    "priceHistory": [48, 49, 51, 53, 52]
-  },
-  {
-    "id": "spiderman",
-    "name": "Spiderman – Marvel Trading Card",
-    "series": "Marvel",
-    "description": "Marvel Superhero Collectible Card.",
-    "price": 59.99,
-    "trend": 60,
-    "rawPrice": "57 €",
-    "lastSale": "60 €",
-    "image": "spiderman-card.jpg",
-    "priceHistory": [55, 57, 58, 59, 60]
-  },
-  {
-    "id": "ironman",
-    "name": "Ironman – Marvel Avengers Trading Card",
-    "series": "Marvel Avengers",
-    "description": "Limitierte Ironman Sammelkarte aus der Marvel Avengers Kollektion.",
-    "price": 69.99,
-    "trend": 70,
-    "rawPrice": "66 €",
-    "lastSale": "69 €",
-    "image": "ironman-card.jpg",
-    "priceHistory": [65, 66, 67, 68, 69]
-  }
-]
+{
+  "cards": [
+    {
+      "id": "card_messi_tc",
+      "name": "Lionel Messi",
+      "club": "Argentina",
+      "variant": "—",
+      "rarity": "—"
+    },
+    {
+      "id": "card_jordan_rc",
+      "name": "Michael Jordan",
+      "club": "Chicago Bulls",
+      "variant": "—",
+      "rarity": "Base"
+    }
+  ]
+}
