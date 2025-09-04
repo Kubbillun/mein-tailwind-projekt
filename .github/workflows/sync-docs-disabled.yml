@@ -1,9 +1,0 @@
-name: "Archived: sync-docs (disabled)"
-
-# Dieser Stub ist absichtlich valide, aber ohne Auto-Trigger.
-# Dadurch gibt es keine YAML-Fehler mehr und nichts läuft automatisch.
-
-on:
-  workflow_call:
-
-jobs: {}
