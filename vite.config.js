@@ -1,16 +1,9 @@
-import { defineConfig } from "vite";
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
 export default defineConfig({
-  base: "/mein-tailwind-projekt/",
-  build: {
-    outDir: "dist",
-    copyPublicDir: true,
-    rollupOptions: {
-      input: {
-        index: "index.html",   // 👈 Root-Entry explizit bauen
-        cards: "cards.html",
-        detail: "detail.html",
-      },
-    },
-  },
-});
+  plugins: [react()],
+  base: '/',             // Root-Pfad, keine Unterordner
+  server: { port: 5173, open: false },
+  build: { outDir: 'dist', sourcemap: false }
+})

@@ -1,0 +1,23 @@
+// vite.config.js
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+// Eine einzige SPA (React) – keine Unterpfade wie /mein-tailwind-projekt/
+export default defineConfig({
+  plugins: [react()],
+  base: '/',              // Root-Pfad
+  server: {
+    port: 5173,
+    open: false
+  },
+  build: {
+    outDir: 'dist',
+    sourcemap: false
+  }
+})import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  base: '/mein-tailwind-projekt/',
+  plugins: [react()]
+});
