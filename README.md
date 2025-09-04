@@ -14,6 +14,10 @@
   - Sets: https://shanabananarama.github.io/mein-tailwind-projekt/api/mocks/sets.json
 
 > Die Inhalte werden automatisch nachgeführt (manuell via *Sync API to /docs* oder nächtlich via Cron).
+<<<<<<< HEAD
 Do  4 Sep 2025 12:41:28 UTC – auto-merge smoke
 Do  4 Sep 2025 12:45:44 UTC – auto-merge smoke
 Do  4 Sep 2025 12:49:23 UTC – auto-merge smoke
+=======
+Do  4 Sep 2025 12:52:51 UTC – auto-merge smoke
+>>>>>>> 8770576 (chore(test): auto-merge smoke)
