@@ -2,23 +2,34 @@ name: auto-merge
 
 on:
   pull_request:
-    types: [labeled, reopened, synchronize, ready_for_review]
-
-permissions:
-  contents: write
-  pull-requests: write
+    types: [labeled, unlabeled, synchronize, reopened, ready_for_review]
 
 jobs:
   enable_auto_merge:
-    # läuft nur, wenn Label 'auto-merge' existiert UND der PR kein Draft ist
-    if: >
-      contains(toJson(github.event.pull_request.labels.*.name), 'auto-merge')
-      && github.event.pull_request.draft == false
+    if: github.event.action == 'labeled' && github.event.label.name == 'automerge'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
-      - name: Enable GitHub AutoMerge (squash)
+      - name: Enable PR automerge (squash)
         uses: peter-evans/enable-pull-request-automerge@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           pull-request-number: ${{ github.event.pull_request.number }}
           merge-method: squash
+
+  disable_auto_merge:
+    if: github.event.action == 'unlabeled' && github.event.label.name == 'automerge'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Disable PR automerge
+        run: |
+          gh pr merge ${{ github.event.pull_request.number }} \
+            --repo "${{ github.repository }}" \
+            --disable-auto
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
