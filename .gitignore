@@ -5,3 +5,21 @@
 !mocks/**
 !.gitignore
 !.gitattributes
+# deps & builds
+node_modules/
+dist/
+.next/
+out/
+
+# supabase runtimes
+supabase/.temp/
+supabase/.branches/
+
+# env & local overrides
+.env
+.env.*
+!.env.example
+
+# OS / misc
+.DS_Store
+bun.lock
