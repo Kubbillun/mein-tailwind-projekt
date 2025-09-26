@@ -23,3 +23,4 @@ supabase/.branches/
 # OS / misc
 .DS_Store
 bun.lock
+.env.local

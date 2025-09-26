@@ -12,7 +12,8 @@
     "publish:backfill": "dotenv -e .env -- node scripts/publish-backfill.mjs",
     "rpc:smoke": "dotenv -e .env -- node scripts/rpc-smoke.mjs",
     "lint": "echo \"(temporary) no lint configured\" && exit 0",
-    "test": "node test.js"
+    "test": "node test.js",
+    "feed:check": "node --env-file=.env.local scripts/feed_check.mjs"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^5.0.2",
