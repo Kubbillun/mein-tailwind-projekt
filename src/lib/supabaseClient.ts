@@ -1,23 +1,37 @@
-import { createClient } from '@supabase/supabase-js';
+// src/lib/supabaseClient.ts
+import { createClient } from '@supabase/supabase-js'
 
-const url  = import.meta.env.VITE_SUPABASE_URL as string;
-const anon = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+const ref =
+  (typeof process !== 'undefined' && process.env.PROJECT_REF) ||
+  (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_PROJECT_REF)
+const anon =
+  (typeof process !== 'undefined' && process.env.SB_ANON_KEY) ||
+  (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_SB_ANON_KEY)
 
-if (!url || !anon) {
-  throw new Error('Supabase ENV fehlt: VITE_SUPABASE_URL oder VITE_SUPABASE_ANON_KEY.');
+if (!ref || !anon) {
+  throw new Error(
+    'Missing Supabase env variables: PROJECT_REF / SB_ANON_KEY or VITE_PROJECT_REF / VITE_SB_ANON_KEY'
+  )
 }
 
-export const supabase = createClient(url, anon, {
-  auth: { persistSession: false },
-});
+export const supabase = createClient(`https://${ref}.supabase.co`, anon)
 
-/** Pingt den Auth-Health-Endpoint – benötigt keine Tabellen/Policies. */
-export async function pingAuth(): Promise<{ ok: boolean; status: number; text: string }> {
-  const res = await fetch(`${url}/auth/v1/health`, {
-    headers: {
-      apikey: anon,
-      Authorization: `Bearer ${anon}`,
-    },
-  });
-  return { ok: res.ok, status: res.status, text: await res.text() };
+// --- health ping for build/health page ---
+export async function pingAuth(): Promise<boolean> {
+  // Works in Vite (browser) and in Node
+  // Vite: import.meta.env.VITE_*
+  // Node: process.env.*
+  // @ts-ignore
+  const viteEnv = (typeof import.meta !== 'undefined' && (import.meta as any).env) || {}
+  const ref =
+    viteEnv.VITE_PROJECT_REF ?? (typeof process !== 'undefined' ? process.env.PROJECT_REF : undefined)
+  const anon =
+    viteEnv.VITE_SB_ANON_KEY ?? (typeof process !== 'undefined' ? process.env.SB_ANON_KEY : undefined)
+
+  if (!ref || !anon) return false
+
+  const res = await fetch(`https://${ref}.supabase.co/rest/v1/?select=1`, {
+    headers: { apikey: anon, Authorization: `Bearer ${anon}` },
+  })
+  return res.ok
 }
