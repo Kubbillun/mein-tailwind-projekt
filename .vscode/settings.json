@@ -1,16 +1,12 @@
 {
-  "css.validate": false,
-  "tailwindCSS.includeLanguages": {
-    "plaintext": "html",
-    "javascript": "javascript",
-    "html": "html"
+  "deno.enable": true,
+  "deno.unstable": true,
+  "deno.lint": true,
+  "deno.suggest.imports.hosts": {
+    "https://deno.land": true,
+    "https://esm.sh": true
   },
-  "editor.quickSuggestions": {
-    "strings": true
-  },
-  "files.associations": {
-    "*.css": "tailwindcss"
-  },
-  "editor.formatOnSave": true,
-  "tailwindCSS.experimental.configFile": "./tailwind.config.js"
+  "deno.importMap": "./supabase/functions/import_map.json",
+  "javascript.validate.enable": false,
+  "typescript.validate.enable": false
 }
