@@ -1,6 +1,6 @@
 // src/app/feed/page.tsx
 import { useEffect, useMemo, useState } from 'react'
-import { fetchFeedPage, type FeedOrder, type FeedParams } from '../../lib/feedApi'
+import { getClientEnv } from '../../lib/clientEnv'
 
 type Row = {
   id: number
@@ -11,72 +11,119 @@ type Row = {
   inserted_at: string
 }
 
-export default function FeedPage() {
-  // --- UI state ---
-  const [q, setQ] = useState<string>('')
-  const [order, setOrder] = useState<FeedOrder>('newest')
-  const [min, setMin] = useState<string>('') // keep as string for input
-  const [max, setMax] = useState<string>('')
-  const [limit, setLimit] = useState<number>(10)
+type Order = 'newest' | 'oldest' | 'price_desc' | 'price_asc'
 
-  // --- data state (always default to []) ---
+export default function FeedPage() {
+  const { ref, anon } = getClientEnv()
+
+  // UI state
+  const [q, setQ] = useState('')
+  const [order, setOrder] = useState<Order>('newest')
+  const [min, setMin] = useState('')
+  const [max, setMax] = useState('')
+  const [limit, setLimit] = useState(10)
+
+  // data state
   const [items, setItems] = useState<Row[]>([])
-  const [lastTs, setLastTs] = useState<string | null>(null)
-  const [lastId, setLastId] = useState<number | null>(null)
+  const [cursorTs, setCursorTs] = useState<string | null>(null)
+  const [cursorId, setCursorId] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const [allLoaded, setAllLoaded] = useState(false)
 
-  const params: FeedParams = useMemo(() => {
-    return {
-      q: q.trim() || undefined,
-      order,
-      min: min !== '' ? Number(min) : undefined,
-      max: max !== '' ? Number(max) : undefined,
-      limit,
-      lastTs,
-      lastId,
+  const baseUrl = useMemo(() => {
+    if (!ref || !anon) return null
+    const u = new URL(`https://${ref}.supabase.co/rest/v1/feed_items_public`)
+    u.searchParams.set('select', '*')
+
+    // order
+    switch (order) {
+      case 'newest':
+        u.searchParams.set('order', 'inserted_at.desc,id.desc')
+        break
+      case 'oldest':
+        u.searchParams.set('order', 'inserted_at.asc,id.asc')
+        break
+      case 'price_desc':
+        u.searchParams.set('order', 'price.desc,id.desc')
+        break
+      case 'price_asc':
+        u.searchParams.set('order', 'price.asc,id.asc')
+        break
     }
-  }, [q, order, min, max, limit, lastTs, lastId])
+
+    // filters
+    if (q.trim()) u.searchParams.set('title', `ilike.*${q.trim()}*`)
+    if (min !== '') u.searchParams.set('price', `gte.${Number(min)}`)
+    if (max !== '') u.searchParams.append('price', `lte.${Number(max)}`)
+
+    return u
+  }, [ref, anon, order, q, min, max])
 
   async function loadFirst() {
+    if (!ref || !anon || !baseUrl) {
+      setErr('Fehlende ENV: VITE_PROJECT_REF / VITE_SB_ANON_KEY')
+      return
+    }
     setLoading(true)
     setErr(null)
     setAllLoaded(false)
-    setLastTs(null)
-    setLastId(null)
+    setCursorTs(null)
+    setCursorId(null)
     try {
-      const page = await fetchFeedPage({ ...params, lastTs: null, lastId: null })
-      const safe = Array.isArray(page) ? (page as Row[]) : []
-      setItems(safe)
-      if (safe.length > 0) {
-        const last = safe[safe.length - 1]
-        setLastTs(last.inserted_at)
-        setLastId(last.id)
+      const u = new URL(baseUrl.toString())
+      u.searchParams.set('limit', String(limit))
+
+      const r = await fetch(u, {
+        headers: { apikey: anon!, Authorization: `Bearer ${anon!}`, Accept: 'application/json' },
+      })
+      if (!r.ok) throw new Error(`HTTP ${r.status}`)
+      const data = (await r.json()) as Row[]
+      setItems(Array.isArray(data) ? data : [])
+      if (data?.length) {
+        const last = data[data.length - 1]
+        setCursorTs(last.inserted_at)
+        setCursorId(last.id)
         setAllLoaded(false)
       } else {
         setAllLoaded(true)
       }
     } catch (e: any) {
+      setItems([])
       setErr(e?.message ?? String(e))
-      setItems([]) // defensive
     } finally {
       setLoading(false)
     }
   }
 
   async function loadMore() {
-    if (allLoaded || loading) return
+    if (loading || allLoaded || !baseUrl || !cursorTs || cursorId == null) return
     setLoading(true)
     setErr(null)
     try {
-      const page = await fetchFeedPage(params)
-      const safe = Array.isArray(page) ? (page as Row[]) : []
-      setItems(prev => [...prev, ...safe])
-      if (safe.length > 0) {
+      const u = new URL(baseUrl.toString())
+      u.searchParams.set('limit', String(limit))
+
+      // cursor (keyset pagination)
+      // inserted_at < ts OR (inserted_at = ts AND id < id)
+      u.searchParams.append(
+        'or',
+        `inserted_at.lt.${encodeURIComponent(cursorTs)},and(inserted_at.eq.${encodeURIComponent(
+          cursorTs,
+        )},id.lt.${cursorId})`,
+      )
+
+      const r = await fetch(u, {
+        headers: { apikey: anon!, Authorization: `Bearer ${anon!}`, Accept: 'application/json' },
+      })
+      if (!r.ok) throw new Error(`HTTP ${r.status}`)
+      const data = (await r.json()) as Row[]
+      const safe = Array.isArray(data) ? data : []
+      setItems((prev) => [...prev, ...safe])
+      if (safe.length) {
         const last = safe[safe.length - 1]
-        setLastTs(last.inserted_at)
-        setLastId(last.id)
+        setCursorTs(last.inserted_at)
+        setCursorId(last.id)
       } else {
         setAllLoaded(true)
       }
@@ -87,105 +134,56 @@ export default function FeedPage() {
     }
   }
 
-  // initial load + whenever filter/sort/limit changes
   useEffect(() => {
     void loadFirst()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q, order, min, max, limit])
 
-  const list: Row[] = Array.isArray(items) ? items : []
-
   return (
-    <main className="mx-auto max-w-4xl p-6 space-y-4">
-      <h1 className="text-3xl font-bold">Latest Feed Items</h1>
+    <main style={{ padding: 16 }}>
+      <h1>Latest Feed Items</h1>
 
       {/* Controls */}
-      <div className="flex flex-wrap gap-2 items-center">
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Titel suchen..."
-          className="border px-3 py-2 rounded w-64"
-        />
-        <select
-          value={order}
-          onChange={(e) => setOrder(e.target.value as FeedOrder)}
-          className="border px-3 py-2 rounded"
-        >
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Titel suchen…" style={{ padding: 8 }} />
+        <select value={order} onChange={(e) => setOrder(e.target.value as Order)} style={{ padding: 8 }}>
           <option value="newest">Neueste zuerst</option>
           <option value="oldest">Älteste zuerst</option>
           <option value="price_desc">Preis ↓</option>
           <option value="price_asc">Preis ↑</option>
         </select>
-        <input
-          value={min}
-          onChange={(e) => setMin(e.target.value)}
-          placeholder="Min €"
-          inputMode="numeric"
-          className="border px-3 py-2 rounded w-28"
-        />
-        <input
-          value={max}
-          onChange={(e) => setMax(e.target.value)}
-          placeholder="Max €"
-          inputMode="numeric"
-          className="border px-3 py-2 rounded w-28"
-        />
-        <select
-          value={limit}
-          onChange={(e) => setLimit(Number(e.target.value))}
-          className="border px-3 py-2 rounded"
-        >
+        <input value={min} onChange={(e) => setMin(e.target.value)} placeholder="Min €" inputMode="numeric" style={{ padding: 8, width: 90 }} />
+        <input value={max} onChange={(e) => setMax(e.target.value)} placeholder="Max €" inputMode="numeric" style={{ padding: 8, width: 90 }} />
+        <select value={limit} onChange={(e) => setLimit(Number(e.target.value))} style={{ padding: 8 }}>
           <option value={5}>5 / Seite</option>
           <option value={10}>10 / Seite</option>
           <option value={20}>20 / Seite</option>
         </select>
       </div>
 
-      {/* Error / Status */}
-      {err && (
-        <div className="text-red-700 font-semibold">
-          Fehler: {err}
+      {/* Status */}
+      {!ref || !anon ? (
+        <div style={{ padding: 12, border: '1px solid #f0c36d', background: '#fff8e1', marginBottom: 12 }}>
+          <strong>Hinweis:</strong> Es fehlen ENV-Werte für den Client.
         </div>
-      )}
+      ) : null}
+      {err && <div style={{ color: 'crimson', marginBottom: 12 }}>Fehler: {err}</div>}
 
       {/* List */}
-      <ul className="space-y-3">
-        {list.length === 0 && !loading && !err && <li>• Keine Treffer.</li>}
-        {list.map((it) => (
-          <li key={it.id} className="border rounded p-3">
-            <div className="flex items-baseline justify-between gap-3">
-              <a
-                href={it.url ?? '#'}
-                target="_blank"
-                rel="noreferrer"
-                className="underline underline-offset-2"
-              >
-                {it.title || 'Untitled'}
-              </a>
-              <span className="text-sm text-gray-500">
-                {new Date(it.inserted_at).toLocaleString()}
-              </span>
-            </div>
-            <div className="text-sm text-gray-700 mt-1">
-              {it.price != null ? `${it.price} ${it.currency ?? ''}` : '—'}
-            </div>
-            {it.url && (
-              <div className="mt-1">
-                <code className="rounded bg-gray-100 px-2 py-1 text-xs">{it.url}</code>
-              </div>
-            )}
+      <ul>
+        {items.map((it) => (
+          <li key={it.id}>
+            <a href={it.url ?? '#'} target="_blank" rel="noreferrer">
+              {it.title ?? 'Untitled'}
+            </a>{' '}
+            — {it.price ?? '—'} {it.currency ?? ''}
           </li>
         ))}
       </ul>
 
       {/* Pager */}
-      <div className="pt-2">
-        <button
-          onClick={loadMore}
-          disabled={loading || allLoaded}
-          className="border px-4 py-2 rounded disabled:opacity-60"
-        >
+      <div style={{ marginTop: 12 }}>
+        <button onClick={loadMore} disabled={loading || allLoaded} style={{ padding: '8px 12px' }}>
           {allLoaded ? 'Alles geladen' : loading ? 'Laden…' : 'Mehr laden'}
         </button>
       </div>

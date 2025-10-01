@@ -1,15 +1,21 @@
-// src/App.tsx
-import { Link } from 'react-router-dom' // falls schon vorhanden: lassen
+// ~/Projects/quickstart-crew/src/App.tsx
+import { Link } from 'react-router-dom'
 
 export default function App() {
   return (
-    <div className="p-6 space-y-4">
-      <header className="flex gap-4">
-        <Link to="/" className="underline">Home</Link>
-        <Link to="/feed" className="underline">Feed</Link>
-      </header>
-
-      {/* …bestehender Inhalt bleibt … */}
-    </div>
+    <main className="mx-auto max-w-3xl p-6 space-y-6">
+      <h1 className="text-2xl font-semibold">Quickstart Crew</h1>
+      <nav className="space-x-4">
+        <Link to="/" className="text-blue-600 underline-offset-2 hover:underline">
+          Home
+        </Link>
+        <Link to="/feed" className="text-blue-600 underline-offset-2 hover:underline">
+          Feed
+        </Link>
+      </nav>
+      <p className="text-gray-700 mt-4">
+        Willkommen in der Quickstart Crew App. Über das Menü oben kannst du die Feed-Seite öffnen.
+      </p>
+    </main>
   )
 }
