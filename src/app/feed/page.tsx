@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { getClientEnv } from '../../lib/clientEnv'
 import type { Row, Order } from './feedTypes'
+import { fetchJson, supabaseHeaders } from '../../lib/http'
 
 // debounce helper for typing in filters
 function useDebouncedValue<T>(value: T, delay = 300) {
@@ -33,7 +34,7 @@ export default function FeedPage() {
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const [allLoaded, setAllLoaded] = useState(false)
-  const [touched, setTouched] = useState(false) // zeigt, dass mindestens ein Load versucht wurde
+  const [touched, setTouched] = useState(false)
 
   const baseUrl = useMemo(() => {
     if (!ref || !anon) return null
@@ -61,9 +62,11 @@ export default function FeedPage() {
     setLoading(true); setErr(null); setAllLoaded(false); setCursorTs(null); setCursorId(null); setTouched(true)
     try {
       const u = new URL(baseUrl.toString()); u.searchParams.set('limit', String(limit))
-      const r = await fetch(u, { headers: { apikey: anon!, Authorization: `Bearer ${anon!}`, Accept: 'application/json' } })
-      if (!r.ok) throw new Error(`HTTP ${r.status}`)
-      const data = (await r.json()) as Row[]
+      const data = await fetchJson<Row[]>(
+        u,
+        { headers: supabaseHeaders(anon), timeoutMs: 8000 },
+        { retries: 2, backoffMs: 350 }
+      )
       const safe = Array.isArray(data) ? data : []
       setItems(safe)
       if (safe.length) {
@@ -80,12 +83,15 @@ export default function FeedPage() {
     setLoading(true); setErr(null)
     try {
       const u = new URL(baseUrl.toString()); u.searchParams.set('limit', String(limit))
-      u.searchParams.append('or',
+      u.searchParams.append(
+        'or',
         `inserted_at.lt.${encodeURIComponent(cursorTs)},and(inserted_at.eq.${encodeURIComponent(cursorTs)},id.lt.${cursorId})`
       )
-      const r = await fetch(u, { headers: { apikey: anon!, Authorization: `Bearer ${anon!}`, Accept: 'application/json' } })
-      if (!r.ok) throw new Error(`HTTP ${r.status}`)
-      const data = (await r.json()) as Row[]
+      const data = await fetchJson<Row[]>(
+        u,
+        { headers: supabaseHeaders(anon!), timeoutMs: 8000 },
+        { retries: 2, backoffMs: 350 }
+      )
       const safe = Array.isArray(data) ? data : []
       setItems(prev => [...prev, ...safe])
       if (safe.length) {
@@ -99,7 +105,6 @@ export default function FeedPage() {
 
   useEffect(() => { void loadFirst() /* eslint-disable-line */ }, [qDeb, order, minDeb, maxDeb, limit])
 
-  // ---- UI helpers ----
   const showPager = items.length > 0 && !allLoaded
   const showEmpty = touched && !loading && !err && items.length === 0
 
@@ -145,7 +150,6 @@ export default function FeedPage() {
         </select>
       </div>
 
-      {/* Status Panels */}
       {!ref || !anon ? (
         <div className="rounded border border-amber-300 bg-amber-50 p-3 text-sm">
           <strong>Hinweis:</strong> Es fehlen ENV-Werte für den Client.
@@ -175,7 +179,6 @@ export default function FeedPage() {
         </div>
       )}
 
-      {/* List */}
       {items.length > 0 && (
         <ul className="space-y-3" aria-busy={loading}>
           {items.map((it) => (
@@ -196,7 +199,6 @@ export default function FeedPage() {
         </ul>
       )}
 
-      {/* Pager */}
       {showPager && (
         <div>
           <button
