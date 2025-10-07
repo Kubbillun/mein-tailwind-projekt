@@ -1,33 +1,39 @@
-// ~/Projects/quickstart-crew/supabase/functions/ops-dispatcher/index.ts
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { corsHeaders } from "../_shared/cors.ts";
 
-// Keys/URL aus Supabase Secrets
-const url = Deno.env.get("SB_URL")!;
-const serviceKey = Deno.env.get("SB_SERVICE_ROLE_KEY")!;
+serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-Deno.serve(async (_req) => {
-  const supabase = createClient(url, serviceKey, {
-    auth: { persistSession: false },
-  });
+  try {
+    const FEED_FN = "fetch-feeds";
 
-  const { data, error } = await supabase
-    .from("feed_items")
-    .select("id, title, source, created_at")
-    .order("created_at", { ascending: false })
-    .limit(5);
+    // interne URL für Aufruf innerhalb der Edge-Runtime (kein SUPABASE_* Prefix!)
+    const INTERNAL_URL =
+      Deno.env.get("EDGE_INTERNAL_URL") ??
+      Deno.env.get("VITE_SUPABASE_URL") ??
+      "http://127.0.0.1:54321";
 
-  if (error) {
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      },
-    );
+    const ANON = Deno.env.get("VITE_SUPABASE_ANON_KEY");
+    if (!ANON) {
+      return new Response("Missing anon key", { status: 500, headers: corsHeaders });
+    }
+
+    const url = `${INTERNAL_URL}/functions/v1/${FEED_FN}`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { apikey: ANON, authorization: `Bearer ${ANON}` },
+    });
+
+    const text = await res.text();
+    const ok = res.ok ? "✅ OK" : "❌ FAIL";
+    return new Response(`${ok}: ${res.status} ${text}`, {
+      headers: { ...corsHeaders, "content-type": "text/plain" },
+      status: res.ok ? 200 : res.status,
+    });
+  } catch (e: any) {
+    return new Response(`❌ exception: ${e?.message ?? String(e)}`, {
+      status: 500,
+      headers: corsHeaders,
+    });
   }
-
-  return new Response(
-    JSON.stringify({ ok: true, feed: data ?? [] }),
-    { headers: { "Content-Type": "application/json" } },
-  );
 });
