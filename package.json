@@ -18,7 +18,13 @@
     "feed:smoke:page": "node --env-file=.env.local scripts/feed_smoke_pagination.mjs",
     "env:print": "node -e \"import(\\\"vite\\\").then(v=>{const e=v.loadEnv(\\\"development\\\", process.cwd(), \\\"\\\"); console.log({ VITE_PROJECT_REF:e.VITE_PROJECT_REF, HAS_KEY: !!e.VITE_SB_ANON_KEY });})\"",
     "dev:clean": "pkill -f vite 2>/dev/null || true && rm -rf node_modules/.vite && npm run dev -- --force",
-    "predev": "kill-port 5173 || true"
+    "predev": "kill-port 5173 || true",
+    "fetch:now": "bash -lc 'AUTH=$(grep ^VITE_SUPABASE_ANON_KEY=. .env.local|cut -d= -f2-) && curl -s -X POST -H \"apikey: $AUTH\" -H \"Authorization: Bearer $AUTH\" http://127.0.0.1:54321/functions/v1/ops-dispatcher && echo'",
+    "edge": "docker rm -f supabase_edge_runtime_quickstart-crew 2>/dev/null || true && supabase functions serve --env-file .env.local --no-verify-jwt",
+    "health": "scripts/health.sh",
+    "smoke": "scripts/smoke.sh",
+    "dev:up": "scripts/dev-up.sh",
+    "dev:down": "scripts/dev-down.sh"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^5.0.4",
