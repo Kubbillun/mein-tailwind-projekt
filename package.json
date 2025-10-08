@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "npm run predev && vite --port 5173 --strictPort",
     "build": "vite build",
     "preview": "vite preview",
     "publish:now": "dotenv -e .env -- node scripts/publish-now.mjs",
@@ -15,17 +15,31 @@
     "test": "node test.js",
     "feed:check": "node --env-file=.env.local scripts/feed_check.mjs",
     "feed:smoke:search": "node --env-file=.env.local scripts/feed_smoke_search.mjs",
-    "feed:smoke:page": "node --env-file=.env.local scripts/feed_smoke_pagination.mjs"
+    "feed:smoke:page": "node --env-file=.env.local scripts/feed_smoke_pagination.mjs",
+    "env:print": "node -e \"import(\\\"vite\\\").then(v=>{const e=v.loadEnv(\\\"development\\\", process.cwd(), \\\"\\\"); console.log({ VITE_PROJECT_REF:e.VITE_PROJECT_REF, HAS_KEY: !!e.VITE_SB_ANON_KEY });})\"",
+    "dev:clean": "pkill -f vite 2>/dev/null || true && rm -rf node_modules/.vite && npm run dev -- --force",
+    "predev": "kill-port 5173 || true",
+    "fetch:now": "bash -lc 'AUTH=$(grep ^VITE_SUPABASE_ANON_KEY=. .env.local|cut -d= -f2-) && curl -s -X POST -H \"apikey: $AUTH\" -H \"Authorization: Bearer $AUTH\" http://127.0.0.1:54321/functions/v1/ops-dispatcher && echo'",
+    "edge": "docker rm -f supabase_edge_runtime_quickstart-crew 2>/dev/null || true && supabase functions serve --env-file .env.local --no-verify-jwt",
+    "health": "scripts/health.sh",
+    "smoke": "scripts/smoke.sh",
+    "dev:up": "scripts/dev-up.sh",
+    "dev:down": "scripts/dev-down.sh"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^5.0.2",
+    "@vitejs/plugin-react": "^5.0.4",
+    "autoprefixer": "^10.4.21",
     "dotenv-cli": "^10.0.0",
+    "kill-port": "^2.0.1",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.14",
     "vite": "^7.1.4"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.57.4",
+    "@supabase/supabase-js": "^2.58.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "react-router-dom": "^7.9.2"
+    "react-router-dom": "^7.9.3",
+    "zod": "3.25.76"
   }
 }
