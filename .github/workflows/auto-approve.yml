@@ -1,13 +1,22 @@
+# ci: retrigger v2 (non-blocking, approves trusted bot PRs)
+
 name: Auto Approve
 
 on:
   pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
 
 jobs:
   auto-approve:
+    # Nur PRs aus demselben Repo (keine Forks)
+    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
       - name: Auto approve pull requests
         uses: hmarr/auto-approve-action@v3
         with:
-          github-token: ${{ secrets.AUTO_APPROVE_TOKEN }}
+          github-token: ${{ secrets.KUBBILLUN_BOT_TOKEN }}
